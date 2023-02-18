@@ -17,17 +17,43 @@ from tensorflow.keras.layers import Dense, Activation
 
 # Pre-processing & Data Encoding
 
-# -----> TO REMOVE!!
-pd.set_option('display.max_columns', None)
-
 # Import dataset
-df = pd.read_csv("datasets/anomalous_traffic_non_const_v6.csv", na_values=['NA','?'])
+df = pd.read_csv("Datasets/Anomalous_Traffic_VF.csv")
+
+# Fields for dummy encode
+dummy_fields = [
+    'frame.protocols', 'coap.payload_length', 'coap.opt.uri_path', 'coap.opt.length', 'ipv6.nxt',
+    'icmpv6.rpl.opt.type', 'coap.code'
+]
+
+# Fields to fill with 0
+fill_fields_0 = [
+    'icmpv6.type', 'icmpv6.rpl.opt.length', 'icmpv6.checksum.status', 'udp.length', 'icmpv6.rpl.dio.version',
+    'icmpv6.rpl.dio.rank', 'ipv6.plen', 'frame.len', 'icmpv6.rpl.dio.dtsn'
+]
+
+# Fields to fill with -1
+fill_fields_1 = [
+    '6lowpan.iphc.m', 'coap.type', '6lowpan.iphc.nh', 'icmpv6.code', 'icmpv6.rpl.opt.transit.pathlifetime'
+]
+
+# Fields to zscore normalization
+zscore_fields = [
+    'wpan.frame_length', 'frame.cap_len', 'icmpv6.rpl.opt.length', 'udp.length', 'icmpv6.rpl.dio.version',
+    'icmpv6.rpl.dio.rank', 'ipv6.plen', 'frame.len', 'icmpv6.rpl.dio.dtsn'
+]
 
 # Convert fields to dummy variables
-def dummies_encode(df, fields):
+def dummy_encode(df, fields):
     for i in fields:
         df = pd.concat([df, pd.get_dummies(df[i], prefix = i)], axis = 1)
         df.drop(i, axis = 1, inplace = True)
+    return df
+
+# Fill empty cells with n value
+def fill_fields(df, fields, n):
+    for i in fields:
+        df[i] = df[i].fillna(n)
     return df
 
 # Extract the CoAP Payload length into a new column
@@ -44,24 +70,16 @@ def zscore_normalization(df, fields):
         df[i] = zscore(df[i])
     return df
 
-# Fields for dummy encode
-fields_for_dummy_encode = [
-    'icmpv6.rpl.opt.length', 'frame.protocols', 'udp.length', 'icmpv6.rpl.dio.version',
-    'coap.opt.uri_path', 'coap.opt.length', 'coap.type', 'ipv6.plen', 'frame.len',
-    'ipv6.nxt', 'icmpv6.rpl.opt.type', 'coap.payload_length', 'icmpv6.code', 'coap.code',
-    'icmpv6.rpl.dio.dtsn'
-]
+fill_fields(df, fill_fields_0, 0)
+fill_fields(df, fill_fields_1, -1)
 
-# Fields for zscore normalization
-fields_for_zscore_encode = [
-    'wpan.frame_length', 'frame.cap_len'
-]
+df['icmpv6.type'] = df['icmpv6.type'].replace(155, 1)
+df['coap.type'] = df['coap.type'].replace(2, 1)
+df['icmpv6.rpl.opt.transit.pathlifetime'] = df['icmpv6.rpl.opt.transit.pathlifetime'].replace(30, 1)
 
 coap_payload_length(df)
-dummies_encode(df, fields_for_dummy_encode)
-zscore_normalization(df, fields_for_zscore_encode)
-
-print(df)
+zscore_normalization(df, zscore_fields)
+df = dummy_encode(df, dummy_fields)
 
 print(f'[DONE] Pre-processing & Data Encoding -- PART 01')
 
@@ -94,11 +112,13 @@ df['src_port'] = df.apply (lambda row: src_port_range(row), axis = 1)
 df = pd.concat([df, pd.get_dummies(df['src_port'], prefix="src_port_range")], axis = 1)
 df.drop('prt_src', axis = 1, inplace = True)
 df.drop('udp.srcport', axis = 1, inplace = True)
+df.drop('src_port', axis = 1, inplace = True)
 
 df['dst_port'] = df.apply (lambda row: dst_port_range(row), axis = 1)
 df = pd.concat([df, pd.get_dummies(df['dst_port'], prefix = "dst_port_range")], axis = 1)
 df.drop('prt_dst', axis = 1, inplace = True)
 df.drop('udp.dstport', axis = 1, inplace = True)
+df.drop('dst_port', axis = 1, inplace = True)
 
 print(f'[DONE] Pre-processing & Data Encoding -- PART 02')
 
@@ -113,9 +133,6 @@ print(f'[DONE] Numpy Multiclass Classification')
 
 # Training validation splitting
 x_train, x_test, y_train, y_test = train_test_split(x, y, test_size = 0.25, random_state = 42)
-
-x_train = np.asarray(x_train).astype(np.float32)
-y_train = np.asarray(y_train).astype(np.float32)
 
 print(f'[DONE] Training validation splitting')
 
@@ -136,7 +153,6 @@ print(f'[DONE] Early Stopping')
 
 # Prediction
 pred = model.predict(x_test)
-pred = np.argmax(pred, axis = 1)
 
 # Metrics for the classification
 def compute_metrics(pred, y_test):
