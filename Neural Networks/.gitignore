@@ -1,3 +1,5 @@
 Datasets/Versions
 Datasets/*.csv
+Datasets/*.csv#
 Saved_Datasets
+.ipynb_checkpoints
