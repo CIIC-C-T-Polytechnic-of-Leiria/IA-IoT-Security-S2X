@@ -1,4 +1,4 @@
-## Machine Learning-Based Intrusion Detection Systems for Smart Farms & Cities
+## Machine Learning-Based Intrusion Detection Systems for Smart Farms & Smart Cities
 
 ---
 
