@@ -1,12 +1,4 @@
-## A Machine Learning-Based Intrusion Detection Systems for Smart Farms & Smart Cities
-
----
-
-<p align="center">
-<img src="Assets/CIIC_logo.png" width="1000px"/>
-</p>
-
----
+## A Machine Learning-Based Intrusion Detection Systems for Smart Cities
 
 ### Description
 
