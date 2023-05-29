@@ -1,5 +1,13 @@
 ## A Machine Learning-Based Intrusion Detection Systems for Smart Cities
 
+---
+
+<p align="center">
+<img src="../Assets/CIIC_logo.png" width="1000px"/>
+</p>
+
+---
+
 ### Description
 
 The increasing adoption of Internet of Things (IoT) devices in smart cities and smart farms has led to an upsurge in security threats. These threats not only compromise the integrity of the data but also pose a serious risk to the safety of the environment and human lives. To tackle this issue, the use of intrusion detection systems (IDSs) has gained significant attention.
